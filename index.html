@@ -5,62 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>St. Andrew Cantors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Colors and fonts from standrewparish.cc */
   :root {
-    --bg: #f7f5f1; --card: #fff; --text: #1f1d1a; --muted: #79736b; --line: #e6e1d9;
-    --accent: #7a1f2b; --on-accent: #fff; --mine: #f5ead8; --danger: #b42318;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #161412; --card: #211e1b; --text: #eee8e0; --muted: #9b948b; --line: #36312c;
-      --accent: #c4505c; --on-accent: #fff; --mine: #3a2f22; --danger: #f97066;
-    }
+    --bg: #f3f4f8; --card: #fff; --text: #333; --muted: #6b7083; --line: #dde0ea;
+    --blue: #2a3e92; --blue-dark: #15488a; --tint: #e9edf8; --danger: #b42318;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .bar { background: var(--blue); color: #fff; }
+  .bar div { max-width: 560px; margin: 0 auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .bar strong { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .bar span { font-size: 14px; opacity: .85; }
   main { max-width: 560px; margin: 0 auto; padding: 18px 16px 90px; }
-  header { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 14px; margin-bottom: 6px; }
-  h1 { font-size: 24px; margin: 0 0 4px; }
-  h2 { font-size: 20px; margin: 32px 0 2px; }
+  h1, h2 { font-weight: 700; color: var(--blue); letter-spacing: -.01em; }
+  h1 { font-size: 26px; margin: 6px 0 4px; }
+  h2 { font-size: 22px; margin: 32px 0 2px; }
   .sub { color: var(--muted); font-size: 14px; margin: 0; }
   .empty { color: var(--muted); margin: 16px 0; }
-  .day { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 6px; }
+  .day { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 20px 0 6px; }
 
-  .mass { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 8px 14px; margin-bottom: 6px; min-height: 54px; }
-  .mass.mine { background: var(--mine); }
+  .mass { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px 8px 14px; margin-bottom: 6px; min-height: 54px; }
+  .mass.mine { background: var(--tint); border-color: #c5cde8; box-shadow: inset 4px 0 0 var(--blue); }
   .mass.removed { opacity: .55; }
   .time { width: 76px; flex: none; font-weight: 600; white-space: nowrap; }
   .info { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
-  .title { width: 100%; font-weight: 600; }
+  .title { width: 100%; font-weight: 700; color: var(--blue); }
   .acts { flex: none; display: flex; gap: 4px; align-items: center; }
 
-  button, select, input { font: inherit; color: var(--text); }
-  button { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  button, select, input, textarea { font: inherit; color: var(--text); }
+  button { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  button.primary { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  button.primary:hover { background: var(--blue-dark); }
   button.quiet { border-color: transparent; background: none; color: var(--muted); padding: 8px; }
   button.armed { color: var(--danger); font-weight: 600; }
-  select, input { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 7px 8px; min-width: 0; }
-  .chip { white-space: nowrap; display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 0 0 0 10px; background: var(--bg); }
-  .chip button { padding: 3px 9px; border: none; background: none; color: var(--muted); }
+  select, input, textarea { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 7px 8px; min-width: 0; }
+  textarea { resize: vertical; }
+  .chip { white-space: nowrap; display: inline-flex; align-items: center; max-width: 100%; border-radius: 999px; padding: 1px 0 1px 11px; background: var(--tint); color: var(--blue); font-weight: 600; }
+  .chip span { overflow: hidden; text-overflow: ellipsis; }
+  .chip button { padding: 2px 9px; border: none; background: none; color: var(--blue); opacity: .7; }
 
-  .toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
-  .toolbar button.on { border-color: var(--text); }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-top: 10px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toolbar button { color: var(--blue); border-color: #c5cde8; font-weight: 600; }
+  .toolbar button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 10px; }
   .panel form, .fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
   .panel label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
   .panel .grow { flex: 1 1 180px; }
-  .panel .grow > * { width: 100%; }
+  .panel .full { flex: 1 1 100%; }
+  .panel .grow > *, .panel .full > * { width: 100%; }
   .person { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .person > div { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .person small { color: var(--muted); display: block; }
 
-  #status { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 15px; max-width: calc(100% - 32px); display: none; }
+  #status { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #1d2b66; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 15px; max-width: calc(100% - 32px); display: none; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
   #status.show { display: block; }
   body.busy button, body.busy select { pointer-events: none; }
 </style>
 </head>
 <body>
+<header class="bar"><div><strong>Saint Andrew Cantors</strong><span id="who"></span></div></header>
 <main id="app"></main>
 <div id="status"></div>
 
@@ -100,6 +108,7 @@
 
   function render() {
     const app = document.getElementById('app');
+    document.getElementById('who').textContent = !state || state.error ? '' : state.admin ? 'Director' : state.me;
     if (!state) {
       app.innerHTML = '<p class="empty">Loading…</p>';
       return;
@@ -113,16 +122,14 @@
 
   function renderCantor() {
     const b = state.blocks[0];
-    return '<header><span>St. Andrew Cantors</span><span>' + esc(state.me) + '</span></header>' +
-      '<h1>' + range(b) + '</h1>' +
+    return '<h1>' + range(b) + '</h1>' +
       (b.masses.length ? renderMasses(b.masses) : '<p class="empty">No Masses left in this block.</p>');
   }
 
   function renderAdmin() {
     const [now, next] = state.blocks;
     const tool = (id, label) => '<button class="' + (panel === id ? 'on' : '') + '" data-act="panel" data-v="' + id + '">' + label + '</button>';
-    let h = '<header><span>St. Andrew Cantors</span><span>Director</span></header>' +
-      '<div class="toolbar">' + tool('add', 'Add Mass') + tool('email', 'Send email') + tool('cantors', 'Cantors') + '</div>' +
+    let h = '<div class="toolbar">' + tool('add', 'Add Mass') + tool('email', 'Send email') + tool('cantors', 'Cantors') + '</div>' +
       renderPanel() +
       '<h2>' + range(now) + '</h2><p class="sub">Open now</p>' +
       (now.masses.length ? renderMasses(now.masses) : '<p class="empty">No Masses left.</p>') +
@@ -163,7 +170,7 @@
         '<div class="info">Removed</div><div class="acts"><button class="quiet" data-act="restore" data-id="' + id + '">Restore</button></div></div>';
     }
     const chips = m.cantors.map((c) =>
-      '<span class="chip">' + esc(c.name) + '<button title="Remove" data-act="adminDrop" data-id="' + id + '" data-code="' + esc(c.code) + '">×</button></span>').join('');
+      '<span class="chip"><span>' + esc(c.name) + '</span><button title="Remove" data-act="adminDrop" data-id="' + id + '" data-code="' + esc(c.code) + '">×</button></span>').join('');
     const taken = m.cantors.map((c) => c.code);
     const assign = m.cantors.length < m.needed && state.cantors.length
       ? '<select data-act="assign" data-id="' + id + '"><option value="">+ Cantor</option>' +
@@ -189,9 +196,11 @@
     if (panel === 'email') {
       const withEmail = state.cantors.filter((c) => c.email).length;
       const missing = state.cantors.length - withEmail;
-      return '<div class="panel"><div class="fields">' +
-        '<button class="primary" data-act="sendEmails"' + (withEmail ? '' : ' disabled') + '>Send links to ' + withEmail + (withEmail === 1 ? ' cantor' : ' cantors') + '</button>' +
-        '<button class="quiet" data-act="panel" data-v="">Cancel</button></div>' +
+      return '<div class="panel"><form data-form="sendEmails">' +
+        '<label class="full">Subject<input name="subject" value="' + esc(state.emailSubject) + '"></label>' +
+        '<label class="full">Message after the link (optional)<textarea name="message" rows="4"></textarea></label>' +
+        '<button class="primary"' + (withEmail ? '' : ' disabled') + '>Send to ' + withEmail + (withEmail === 1 ? ' cantor' : ' cantors') + '</button>' +
+        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
         (state.lastEmailed ? '<p class="sub" style="margin-top:10px">Last sent ' + esc(state.lastEmailed) + '</p>' : '') +
         (missing ? '<p class="sub" style="margin-top:6px">' + missing + ' without an email address</p>' : '') +
         '</div>';
@@ -220,7 +229,7 @@
       state = s;
       if (!s.message && onOk) onOk();
       render();
-      s.message ? show(s.message) : hide();
+      s.message || s.notice ? show(s.message || s.notice) : hide();
     } catch (err) {
       show(err.message);
     } finally {
@@ -296,7 +305,6 @@
     else if (act === 'remove') call('removeMass', [id]);
     else if (act === 'restore') call('restoreMass', [id]);
     else if (act === 'removeCantor') call('removeCantor', [code]);
-    else if (act === 'sendEmails') { panel = ''; call('sendEmails'); }
     else if (act === 'copy') copy(v, b);
     else if (act === 'panel') { panel = panel === v ? '' : v; render(); }
   });
@@ -319,6 +327,8 @@
       const name = val('pick') === '__other' ? val('custom') : val('pick');
       if (!name) return show('Pick a Mass.');
       call('addMass', [{ name, date: val('date'), time: val('time'), needed: val('needed') }], () => (panel = ''));
+    } else if (f.dataset.form === 'sendEmails') {
+      call('sendEmails', [val('subject'), val('message')], () => (panel = ''));
     } else if (f.dataset.form === 'addCantor') {
       call('addCantor', [val('name'), val('email')]);
     }
