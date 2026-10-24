@@ -27,7 +27,8 @@
   h2 { font-size: 22px; margin: 32px 0 2px; }
   .sub { color: var(--muted); font-size: 14px; margin: 0; }
   .empty { color: var(--muted); margin: 16px 0; }
-  .day { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 20px 0 6px; }
+  .day { font-size: 19px; font-weight: 700; margin: 18px 0 8px; }
+  .week { border: 0; border-top: 2px solid #c5cde8; margin: 26px 0 0; }
 
   .mass { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px 8px 14px; margin-bottom: 6px; min-height: 54px; }
   .mass.mine { background: var(--tint); border-color: #c5cde8; box-shadow: inset 4px 0 0 var(--blue); }
@@ -97,6 +98,10 @@
   const parse = (ymd) => new Date(ymd + 'T12:00:00Z');
   const md = (ymd) => MONTHS[parse(ymd).getUTCMonth()] + ' ' + parse(ymd).getUTCDate();
   const dayLabel = (ymd) => DAYS[parse(ymd).getUTCDay()] + ', ' + md(ymd);
+  const FULL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const fullDayLabel = (ymd) => FULL_DAYS[parse(ymd).getUTCDay()] + ', ' + md(ymd);
+  // The Monday starting the week a date falls in.
+  const weekOf = (ymd) => parse(ymd).getTime() - ((parse(ymd).getUTCDay() + 6) % 7) * 864e5;
   const range = (b) => md(b.start) + ' – ' + md(b.end);
   function time12(hm) {
     const [h, m] = hm.split(':').map(Number);
@@ -143,8 +148,9 @@
     let h = '', day = '';
     masses.forEach((m) => {
       if (m.date !== day) {
+        if (day && weekOf(m.date) !== weekOf(day)) h += '<hr class="week">';
         day = m.date;
-        h += '<div class="day">' + dayLabel(day) + '</div>';
+        h += '<div class="day">' + fullDayLabel(day) + '</div>';
       }
       h += state.admin ? adminMass(m) : cantorMass(m);
     });
