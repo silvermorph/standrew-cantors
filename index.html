@@ -9,10 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Colors and fonts from standrewparish.cc */
+  /* Colors come from site.config.json (dev/site.js fills in the {{…}} placeholders). */
   :root {
     --bg: #f3f4f8; --card: #fff; --text: #333; --muted: #6b7083; --line: #dde0ea;
-    --blue: #2a3e92; --blue-dark: #15488a; --tint: #e9edf8; --danger: #b42318;
+    --blue: #2a3e92; --blue-dark: #15488a; --tint: #e9edf8; --tint-line: #c5cde8; --danger: #b42318;
+    --green: #2e7d32; --green-bg: #eaf6ec; --green-line: #b9dfc0;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -28,11 +29,14 @@
   .sub { color: var(--muted); font-size: 14px; margin: 0; }
   .empty { color: var(--muted); margin: 16px 0; }
   .day { font-size: 19px; font-weight: 700; margin: 18px 0 8px; }
-  .week { border: 0; border-top: 2px solid #c5cde8; margin: 26px 0 0; }
+  .week { border: 0; border-top: 2px solid var(--tint-line); margin: 26px 0 0; }
 
   .mass { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px 8px 14px; margin-bottom: 6px; min-height: 54px; }
-  .mass.mine { background: var(--tint); border-color: #c5cde8; box-shadow: inset 4px 0 0 var(--blue); }
+  .mass.mine { background: var(--tint); border-color: var(--tint-line); box-shadow: inset 4px 0 0 var(--blue); }
+  .mass.full { background: var(--green-bg); border-color: var(--green-line); }
   .mass.removed { opacity: .55; }
+  .check { width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #fff; display: inline-flex; align-items: center; justify-content: center; margin: 0 6px; }
+  .check svg { width: 15px; height: 15px; }
   .time { width: 76px; flex: none; font-weight: 600; white-space: nowrap; }
   .info { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
   .title { width: 100%; font-weight: 700; color: var(--blue); }
@@ -51,7 +55,7 @@
   .chip button { padding: 2px 9px; border: none; background: none; color: var(--blue); opacity: .7; }
 
   .toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
-  .toolbar button { color: var(--blue); border-color: #c5cde8; font-weight: 600; }
+  .toolbar button { color: var(--blue); border-color: var(--tint-line); font-weight: 600; }
   .toolbar button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
   .panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 10px; }
   .panel form, .fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
@@ -59,9 +63,51 @@
   .panel .grow { flex: 1 1 180px; }
   .panel .full { flex: 1 1 100%; }
   .panel .grow > *, .panel .full > * { width: 100%; }
+  .panel .lbl { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .rte { border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+  .rte:focus-within { border-color: var(--blue); }
+  .rte-tools { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-bottom: 1px solid var(--line); }
+  .rte-tools button { border: none; background: none; padding: 5px 10px; font-size: 15px; color: var(--text); min-width: 36px; }
+  .rte-tools button.on { background: var(--tint); color: var(--blue); }
+  .rte-tools .hl { background: #fff59d; padding: 0 3px; }
+  .rte-body { min-height: 120px; padding: 8px 10px; outline: none; overflow-wrap: anywhere; }
+  .rte-body ul, .rte-body ol { margin: 4px 0; padding-left: 24px; }
+  .rte-body p { margin: 0 0 8px; }
+  .music { display: block; margin: 18px 0 0; }
+  .music .lbl { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .music textarea { width: 100%; }
+  .music .text { white-space: pre-wrap; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; }
+  .slots { width: 100%; font-size: 14px; border-collapse: collapse; }
+  .slots td { padding: 4px 10px 4px 0; vertical-align: top; }
+  .slots td:first-child { white-space: nowrap; }
+  .slots .open { color: var(--danger); font-weight: 600; }
+  .slots .ok { color: var(--green); }
+  .picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 2px 12px; }
+  .panel label.pick { flex-direction: row; align-items: center; gap: 8px; font-size: 15px; color: var(--text); padding: 4px 0; cursor: pointer; }
+  .panel label.pick.off { color: var(--muted); cursor: default; }
+  .pick small { color: var(--muted); font-size: 12px; }
+  input[type=checkbox] { padding: 0; margin: 0; width: 18px; height: 18px; flex: none; accent-color: var(--blue); }
   .person { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .person > div { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .person small { color: var(--muted); display: block; }
+
+  .periods { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin: 24px 0 6px; }
+  .periods .cur { text-align: center; }
+  .periods .cur h2 { margin: 0; white-space: nowrap; }
+  .periods .cur.past h2 { color: var(--muted); }
+  .periods .side { border: none; background: none; padding: 6px 2px; color: var(--blue); font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .periods .side.prev { text-align: left; }
+  .periods .side.next { text-align: right; }
+  .periods .side.past { color: var(--muted); }
+  .periods .side small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .periods .side:hover span { text-decoration: underline; }
+  button.link { border: none; background: none; padding: 0; color: var(--blue); text-decoration: underline; font-size: inherit; }
+  .locked .mass { cursor: default; }
+  .locked .chip { padding-right: 11px; }
+  dialog { border: none; border-radius: 10px; padding: 20px; max-width: min(360px, calc(100% - 32px)); box-shadow: 0 8px 32px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(20,25,50,.4); }
+  dialog p { margin: 0 0 18px; }
+  dialog form { display: flex; justify-content: flex-end; gap: 8px; }
 
   #status { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #1d2b66; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 15px; max-width: calc(100% - 32px); display: none; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
   #status.show { display: block; }
@@ -72,19 +118,31 @@
 <header class="bar"><div><strong>Saint Andrew Cantors</strong><span id="who"></span></div></header>
 <main id="app"></main>
 <div id="status"></div>
+<dialog id="pastDlg"><p>This period is already complete. Return to the current sign-up period?</p>
+  <form method="dialog"><button value="cancel" class="quiet">Cancel</button><button value="ok" class="primary">OK</button></form></dialog>
 
 <script>
-  // The Google Apps Script backend (src/Code.js).
+  // The Google Apps Script backend (src/Code.js), filled in from the deployment ID.
   const API_URL = 'https://script.google.com/macros/s/AKfycbyIbYjPRm3t4a37lodvQq6Rdred4DcQDqzwS_2QFU3cKbOYyiA3yhW75H1wvhxGGmRq3A/exec';
   const KEY = new URLSearchParams(location.search).get('k') || '';
   let state = null;
   let panel = '';
+  // Emails being written and music being typed, kept across re-renders.
+  // "to" is the director's own pick of cantor codes, or null for the usual recipients.
+  const freshDrafts = () => ({
+    email: { subject: null, message: '', to: null },
+    weekend: { sat: '', subject: null, message: null, dirEmail: null, to: null },
+    remind: { subject: null, message: '', to: null },
+  });
+  let drafts = freshDrafts();
+  const musicDrafts = {};
+  let view = ''; // Director: a date in the period being looked at; '' for the open period.
 
   // Sent without Google cookies, so it works whatever accounts the browser is signed into.
   async function api(fn, args = []) {
     let out;
     try {
-      const res = await fetch(API_URL, { method: 'POST', credentials: 'omit', body: JSON.stringify({ fn, key: KEY, args }) });
+      const res = await fetch(API_URL, { method: 'POST', credentials: 'omit', body: JSON.stringify({ fn, key: KEY, args, view }) });
       out = await res.json();
     } catch (e) {
       throw new Error('Couldn’t connect. Check your connection and try again.');
@@ -103,6 +161,12 @@
   // The Monday starting the week a date falls in.
   const weekOf = (ymd) => parse(ymd).getTime() - ((parse(ymd).getUTCDay() + 6) % 7) * 864e5;
   const range = (b) => md(b.start) + ' – ' + md(b.end);
+  const addDays = (ymd, n) => new Date(parse(ymd).getTime() + n * 864e5).toISOString().slice(0, 10);
+  const satOf = (ymd) => new Date(weekOf(ymd) + 5 * 864e5).toISOString().slice(0, 10);
+  const weekendLabel = (sat) => {
+    const sun = addDays(sat, 1);
+    return sat.slice(5, 7) === sun.slice(5, 7) ? md(sat) + '–' + parse(sun).getUTCDate() : md(sat) + ' – ' + md(sun);
+  };
   function time12(hm) {
     const [h, m] = hm.split(':').map(Number);
     return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM');
@@ -132,23 +196,34 @@
   }
 
   function renderAdmin() {
-    const [now, next] = state.blocks;
+    const b = state.blocks[0];
+    const p = state.period;
+    const past = p.status === 'past';
     const tool = (id, label) => '<button class="' + (panel === id ? 'on' : '') + '" data-act="panel" data-v="' + id + '">' + label + '</button>';
-    let h = '<div class="toolbar">' + tool('add', 'Add Mass') + tool('email', 'Send email') + tool('cantors', 'Cantors') + '</div>' +
+    const side = (s, dir) => !s ? '<span></span>' :
+      '<button class="side ' + dir + (s.status === 'past' ? ' past' : '') + '" data-act="go" data-v="' + s.start + '">' +
+      '<span>' + (dir === 'prev' ? '‹ ' : '') + range(s) + (dir === 'next' ? ' ›' : '') + '</span>' +
+      '<small>' + { past: 'Past', open: 'Current', upcoming: 'Upcoming' }[s.status] + '</small></button>';
+    const sub = past ? 'Past' : p.status === 'open' ? 'Open now' : 'Opens ' + dayLabel(p.opens.slice(0, 10)) + ', ' + time12(p.opens.slice(11));
+    let h = '<div class="toolbar">' + tool('add', 'Add Mass') + tool('email', 'Sign-up email') + tool('weekend', 'Weekend email') + tool('remind', 'Reminder') + tool('cantors', 'Cantors') + tool('settings', 'Settings') + '</div>' +
       renderPanel() +
-      '<h2>' + range(now) + '</h2><p class="sub">Open now</p>' +
-      (now.masses.length ? renderMasses(now.masses) : '<p class="empty">No Masses left.</p>') +
-      '<h2>' + range(next) + '</h2><p class="sub">Opens ' + dayLabel(state.nextOpens.slice(0, 10)) + ', ' + time12(state.nextOpens.slice(11)) + '</p>' +
-      renderMasses(next.masses);
+      '<nav class="periods">' + side(p.prev, 'prev') +
+      '<div class="cur' + (past ? ' past' : '') + '"><h2>' + range(b) + '</h2><p class="sub">' + sub + '</p></div>' +
+      side(p.next, 'next') + '</nav>' +
+      (p.status !== 'open' ? '<p class="sub" style="text-align:center"><button class="link" data-act="go" data-v="">Back to current period</button></p>' : '') +
+      '<div class="' + (past ? 'locked' : '') + '">' +
+      (b.masses.length ? renderMasses(b.masses, true) : '<p class="empty">No Masses left.</p>') + '</div>';
     if (state.later.length) h += '<h2>Later</h2>' + renderMasses(state.later);
     return h;
   }
 
-  function renderMasses(masses) {
+  function renderMasses(masses, withMusic) {
     let h = '', day = '';
     masses.forEach((m) => {
       if (m.date !== day) {
-        if (day && weekOf(m.date) !== weekOf(day)) h += '<hr class="week">';
+        const newWeek = !day || weekOf(m.date) !== weekOf(day);
+        if (day && newWeek) h += '<hr class="week">';
+        if (newWeek && withMusic) h += musicBox(satOf(m.date));
         day = m.date;
         h += '<div class="day">' + fullDayLabel(day) + '</div>';
       }
@@ -157,20 +232,25 @@
     return h;
   }
 
+  const CHECK = '<span class="check" title="Covered" aria-label="Covered"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></span>';
+  const massClass = (m, mine) => 'mass' + (m.cantors.length >= m.needed ? ' full' : '') + (mine ? ' mine' : '');
+  const checkIf = (m) => m.cantors.length >= m.needed ? CHECK : '';
+
   function cantorMass(m) {
     const mine = m.cantors.some((c) => c.mine);
     const names = m.cantors.map((c) => c.mine ? '<strong>You</strong>' : esc(c.name)).join(', ');
     const act = mine
       ? '<button class="quiet" data-act="drop" data-id="' + esc(m.id) + '">Drop</button>'
       : m.cantors.length < m.needed ? '<button class="primary" data-act="signUp" data-id="' + esc(m.id) + '">Sign up</button>' : '';
-    return '<div class="mass' + (mine ? ' mine' : '') + '">' +
+    return '<div class="' + massClass(m, mine) + '">' +
       '<div class="time">' + time12(m.time) + '</div>' +
       '<div class="info">' + (m.name ? '<div class="title">' + esc(m.name) + '</div>' : '') + '<span>' + names + '</span></div>' +
-      '<div class="acts">' + act + '</div></div>';
+      '<div class="acts">' + checkIf(m) + act + '</div></div>';
   }
 
   function adminMass(m) {
     const id = esc(m.id);
+    if (state.period.status === 'past') return pastMass(m);
     if (m.removed) {
       return '<div class="mass removed"><div class="time">' + time12(m.time) + '</div>' +
         '<div class="info">Removed</div><div class="acts"><button class="quiet" data-act="restore" data-id="' + id + '">Restore</button></div></div>';
@@ -183,9 +263,67 @@
         state.cantors.filter((c) => !taken.includes(c.code)).map((c) => '<option value="' + esc(c.code) + '">' + esc(c.name) + '</option>').join('') +
         '</select>'
       : '';
-    return '<div class="mass"><div class="time">' + time12(m.time) + '</div>' +
+    return '<div class="' + massClass(m) + '"><div class="time">' + time12(m.time) + '</div>' +
       '<div class="info">' + (m.name ? '<div class="title">' + esc(m.name) + '</div>' : '') + chips + assign + '</div>' +
-      '<div class="acts"><button class="quiet" data-act="remove" data-confirm="Remove?" data-id="' + id + '">Remove</button></div></div>';
+      '<div class="acts">' + checkIf(m) + '<button class="quiet" data-act="remove" data-confirm="Remove?" data-id="' + id + '">Remove</button></div></div>';
+  }
+
+  // The director's notes on the music for a week, saved when they leave the box.
+  function musicBox(sat) {
+    const w = state.weeks.find((x) => x.sat === sat);
+    if (!w) return '';
+    const label = '<span class="lbl">Music for the weekend of ' + weekendLabel(sat) + '</span>';
+    if (state.period.status === 'past' || w.past) {
+      return w.music ? '<div class="music">' + label + '<div class="text">' + esc(w.music) + '</div></div>' : '';
+    }
+    const text = sat in musicDrafts ? musicDrafts[sat] : w.music;
+    return '<label class="music">' + label + '<textarea data-music="' + sat + '" rows="3" placeholder="Hymns, psalm, Mass parts…">' + esc(text) + '</textarea></label>';
+  }
+
+  // Read only: tapping it asks whether to go back to the current period.
+  function pastMass(m) {
+    const who = m.removed ? 'Removed'
+      : m.cantors.length ? m.cantors.map((c) => '<span class="chip"><span>' + esc(c.name) + '</span></span>').join('')
+      : '<span class="sub">No cantor</span>';
+    return '<div class="' + (m.removed ? 'mass removed' : massClass(m)) + '"><div class="time">' + time12(m.time) + '</div>' +
+      '<div class="info">' + (m.name ? '<div class="title">' + esc(m.name) + '</div>' : '') + who + '</div>' +
+      '<div class="acts">' + (m.removed ? '' : checkIf(m)) + '</div></div>';
+  }
+
+  // Every cantor with a checkbox; the usual recipients start checked.
+  function recipientPicker(usual, singing = []) {
+    const chosen = drafts[panel].to || usual;
+    const rows = state.cantors.map((c) => c.email
+      ? '<label class="pick"><input type="checkbox" data-pick value="' + esc(c.code) + '"' + (chosen.includes(c.code) ? ' checked' : '') + '>' +
+        '<span>' + esc(c.name) + (singing.includes(c.code) ? ' <small>singing</small>' : '') + '</span></label>'
+      : '<label class="pick off"><input type="checkbox" disabled><span>' + esc(c.name) + ' <small>' + (singing.includes(c.code) ? 'singing, ' : '') + 'no email</small></span></label>').join('');
+    return '<div class="full"><span class="lbl">To: <button type="button" class="link" data-pickall="1">all</button> · ' +
+      '<button type="button" class="link" data-pickall="0">none</button></span><div class="picks">' + rows + '</div></div>';
+  }
+
+  function sendButton(usual, blocked) {
+    const n = (drafts[panel].to || usual).filter((code) => state.cantors.some((c) => c.code === code && c.email)).length;
+    return '<button class="primary" id="sendBtn"' + (blocked ? ' data-blocked="1"' : '') + (n && !blocked ? '' : ' disabled') + '>' + sendLabel(n) + '</button>';
+  }
+  const sendLabel = (n) => 'Send to ' + n + (n === 1 ? ' cantor' : ' cantors');
+  const everyoneWithEmail = () => state.cantors.filter((c) => c.email).map((c) => c.code);
+
+  function picksChanged() {
+    const picked = Array.from(document.querySelectorAll('[data-pick]:checked')).map((b) => b.value);
+    drafts[panel].to = picked;
+    const btn = document.getElementById('sendBtn');
+    btn.textContent = sendLabel(picked.length);
+    btn.disabled = !picked.length || !!btn.dataset.blocked;
+  }
+
+  function richText(label, html) {
+    return '<div class="full"><span class="lbl">' + label + '</span><div class="rte"><div class="rte-tools">' +
+      '<button type="button" data-cmd="bold" title="Bold"><b>B</b></button>' +
+      '<button type="button" data-cmd="italic" title="Italic"><i>I</i></button>' +
+      '<button type="button" data-cmd="highlight" title="Highlight"><span class="hl">H</span></button>' +
+      '<button type="button" data-cmd="insertUnorderedList" title="Bullets">• List</button>' +
+      '<button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button></div>' +
+      '<div class="rte-body" id="msg" contenteditable="true" role="textbox" aria-multiline="true" aria-label="' + label + '">' + html + '</div></div></div>';
   }
 
   function renderPanel() {
@@ -200,16 +338,71 @@
         '<button class="primary">Add</button></form></div>';
     }
     if (panel === 'email') {
-      const withEmail = state.cantors.filter((c) => c.email).length;
-      const missing = state.cantors.length - withEmail;
+      const usual = everyoneWithEmail();
       return '<div class="panel"><form data-form="sendEmails">' +
-        '<label class="full">Subject<input name="subject" value="' + esc(state.emailSubject) + '"></label>' +
-        '<label class="full">Message after the link (optional)<textarea name="message" rows="4"></textarea></label>' +
-        '<button class="primary"' + (withEmail ? '' : ' disabled') + '>Send to ' + withEmail + (withEmail === 1 ? ' cantor' : ' cantors') + '</button>' +
+        recipientPicker(usual) +
+        '<label class="full">Subject<input name="subject" value="' + esc(drafts.email.subject == null ? state.emailSubject : drafts.email.subject) + '"></label>' +
+        richText('Message after the link (optional)', drafts.email.message) +
+        sendButton(usual) +
         '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
         (state.lastEmailed ? '<p class="sub" style="margin-top:10px">Last sent ' + esc(state.lastEmailed) + '</p>' : '') +
-        (missing ? '<p class="sub" style="margin-top:6px">' + missing + ' without an email address</p>' : '') +
         '</div>';
+    }
+    if (panel === 'weekend') {
+      const weeks = state.weeks.filter((w) => !w.past);
+      if (!weeks.length) return '<div class="panel"><p class="sub">No weekends left in this period. Use the arrows to pick another.</p></div>';
+      const d = drafts.weekend;
+      if (!weeks.some((w) => w.sat === d.sat)) Object.assign(d, { sat: weeks[0].sat, subject: null, message: null, to: null });
+      const w = weeks.find((x) => x.sat === d.sat);
+      const music = w.sat in musicDrafts ? musicDrafts[w.sat] : w.music;
+      const usual = w.cantors.filter((c) => c.email).map((c) => c.code);
+      return '<div class="panel"><form data-form="sendWeekend">' +
+        '<label class="full">Weekend<select name="weekendSat">' +
+        weeks.map((x) => '<option value="' + x.sat + '"' + (x.sat === w.sat ? ' selected' : '') + '>' + weekendLabel(x.sat) + '</option>').join('') + '</select></label>' +
+        recipientPicker(usual, w.cantors.map((c) => c.code)) +
+        '<label class="full">Your email (you get a copy, and replies come to you)<input name="dirEmail" type="email" autocomplete="email" value="' +
+        esc(d.dirEmail == null ? state.directorEmail : d.dirEmail) + '"></label>' +
+        '<label class="full">Subject<input name="subject" value="' + esc(d.subject == null ? 'Music for ' + weekendLabel(w.sat) : d.subject) + '"></label>' +
+        richText('Message', d.message == null ? esc(music).replace(/\n/g, '<br>') : d.message) +
+        sendButton(usual) +
+        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
+        '<p class="sub" style="margin-top:10px">Starts with a list of who’s singing which Mass that week (Monday through Sunday). Everyone checked is on one email together.</p></div>';
+    }
+    if (panel === 'remind') {
+      const up = state.upcoming;
+      if (!up) return '<div class="panel"><p class="sub">No upcoming Masses are open for signups.</p></div>';
+      const d = drafts.remind;
+      const usual = everyoneWithEmail();
+      const open = up.masses.filter((m) => m.cantors.length < m.needed).length;
+      const rows = up.masses.map((m) => {
+        const left = m.needed - m.cantors.length;
+        const names = m.cantors.map((c) => esc(c.name)).join(', ');
+        const status = left > 0
+          ? (names ? names + '; ' : '') + '<span class="open">' + (left === 1 ? 'needs a cantor' : 'needs ' + left + ' cantors') + '</span>'
+          : '<span class="ok">✓ ' + names + '</span>';
+        return '<tr><td>' + dayLabel(m.date) + ', ' + time12(m.time) + (m.name ? '<br><small>' + esc(m.name) + '</small>' : '') + '</td><td>' + status + '</td></tr>';
+      }).join('');
+      return '<div class="panel"><form data-form="sendReminder">' +
+        '<div class="full"><span class="lbl">The weekend of ' + weekendLabel(up.sat) + '</span><table class="slots">' + rows + '</table></div>' +
+        recipientPicker(usual) +
+        '<label class="full">Subject<input name="subject" value="' + esc(d.subject == null ? 'Cantors needed: ' + weekendLabel(up.sat) : d.subject) + '"></label>' +
+        richText('Message after the link (optional)', d.message) +
+        sendButton(usual, !open) +
+        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
+        '<p class="sub" style="margin-top:10px">' + (open
+          ? 'Each person gets their own email with this list and their sign-up link.'
+          : 'Every Mass that weekend already has its cantors.') + '</p>' +
+        (state.lastReminded ? '<p class="sub" style="margin-top:6px">Last sent ' + esc(state.lastReminded) + '</p>' : '') +
+        '</div>';
+    }
+    if (panel === 'settings') {
+      return '<div class="panel"><form data-form="saveSettings">' +
+        '<label class="full">Your email<input name="myEmail" type="email" autocomplete="email" value="' + esc(state.directorEmail) + '"></label>' +
+        '<label class="pick" style="flex-basis:100%"><input type="checkbox" name="digest"' + (state.digest ? ' checked' : '') + '>' +
+        '<span>Email me a daily digest when signups change</span></label>' +
+        '<button class="primary">Save</button>' +
+        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
+        '<p class="sub" style="margin-top:10px">Each morning around 7, if anyone signed up or dropped since the last one: the current schedule with the changes highlighted. Nothing on days without changes.</p></div>';
     }
     if (panel === 'cantors') {
       const list = state.cantors.map((c) =>
@@ -227,9 +420,18 @@
 
   // ---------------------------------------------------------------- actions
 
-  async function call(fn, args = [], onOk) {
+  function go(v) {
+    view = v;
+    panel = '';
+    call('getState', [], () => scrollTo(0, 0), 'Loading…');
+  }
+
+  const pastDlg = document.getElementById('pastDlg');
+  pastDlg.addEventListener('close', () => { if (pastDlg.returnValue === 'ok') go(''); });
+
+  async function call(fn, args = [], onOk, busyText = 'Saving…') {
     document.body.classList.add('busy');
-    show('Saving…', 0);
+    show(busyText, 0);
     try {
       const s = await api(fn, args);
       state = s;
@@ -301,6 +503,15 @@
   }
 
   document.addEventListener('click', (e) => {
+    if (state && state.admin && state.period.status === 'past' && e.target.closest('.locked .mass, .locked .music')) {
+      pastDlg.returnValue = '';
+      return pastDlg.showModal();
+    }
+    const all = e.target.closest('[data-pickall]');
+    if (all) {
+      document.querySelectorAll('[data-pick]').forEach((box) => (box.checked = all.dataset.pickall === '1'));
+      return picksChanged();
+    }
     const b = e.target.closest('button[data-act]');
     if (!b) return;
     const { act, id, code, v } = b.dataset;
@@ -312,12 +523,26 @@
     else if (act === 'restore') call('restoreMass', [id]);
     else if (act === 'removeCantor') call('removeCantor', [code]);
     else if (act === 'copy') copy(v, b);
+    else if (act === 'go') go(v);
     else if (act === 'panel') { panel = panel === v ? '' : v; render(); }
   });
 
   document.addEventListener('change', (e) => {
     const el = e.target;
     if (el.dataset.act === 'assign' && el.value) call('signUp', [el.dataset.id, el.value]);
+    if (el.dataset.music) {
+      const sat = el.dataset.music;
+      const w = state.weeks.find((x) => x.sat === sat);
+      if (w && el.value.trim() === w.music) delete musicDrafts[sat];
+      else call('setMusic', [sat, el.value], () => {
+        if (musicDrafts[sat] === el.value) delete musicDrafts[sat];
+      });
+    }
+    if (el.dataset.pick !== undefined) picksChanged();
+    if (el.name === 'weekendSat') {
+      Object.assign(drafts.weekend, { sat: el.value, subject: null, message: null, to: null });
+      render();
+    }
     if (el.name === 'pick') {
       const wrap = document.getElementById('customWrap');
       wrap.hidden = el.value !== '__other';
@@ -334,10 +559,125 @@
       if (!name) return show('Pick a Mass.');
       call('addMass', [{ name, date: val('date'), time: val('time'), needed: val('needed') }], () => (panel = ''));
     } else if (f.dataset.form === 'sendEmails') {
-      call('sendEmails', [val('subject'), val('message')], () => (panel = ''));
+      call('sendEmails', [val('subject'), editorHtml(), drafts.email.to], () => {
+        panel = '';
+        drafts.email = freshDrafts().email;
+      });
+    } else if (f.dataset.form === 'saveSettings') {
+      call('saveSettings', [{ email: val('myEmail'), digest: f.elements.digest.checked }], () => (panel = ''));
+    } else if (f.dataset.form === 'sendReminder') {
+      call('sendReminder', [val('subject'), editorHtml(), drafts.remind.to], () => {
+        panel = '';
+        drafts.remind = freshDrafts().remind;
+      });
+    } else if (f.dataset.form === 'sendWeekend') {
+      call('sendWeekend', [val('weekendSat'), val('subject'), editorHtml(), val('dirEmail'), drafts.weekend.to], () => {
+        panel = '';
+        drafts.weekend = freshDrafts().weekend;
+      });
     } else if (f.dataset.form === 'addCantor') {
       call('addCantor', [val('name'), val('email')]);
     }
+  });
+
+  // ---------------------------------------------------------------- message editor
+
+  const HL = '#fff59d';
+  const editor = () => document.getElementById('msg');
+  const editorHtml = () => (editor().textContent.trim() || editor().querySelector('li') ? editor().innerHTML : '');
+  const shows = (c) => !!c && !/^(transparent|rgba\(0, 0, 0, 0\)|rgb\(255, 255, 255\)|white)$/.test(c);
+  let savedRange = null;
+
+  function highlighted() {
+    const sel = getSelection();
+    for (let n = sel.anchorNode; n && n !== editor(); n = n.parentNode) {
+      if (n.nodeType === 1 && shows(n.style.backgroundColor)) return true;
+    }
+    return false;
+  }
+
+  function updateTools() {
+    document.querySelectorAll('[data-cmd]').forEach((b) => {
+      const c = b.dataset.cmd;
+      let on = false;
+      try { on = c === 'highlight' ? highlighted() : document.queryCommandState(c); } catch (e) {}
+      b.classList.toggle('on', on);
+    });
+  }
+
+  function format(cmd) {
+    const ed = editor();
+    ed.focus();
+    const sel = getSelection();
+    if (savedRange && !ed.contains(sel.anchorNode)) {
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    }
+    if (cmd === 'highlight') {
+      const color = highlighted() ? 'transparent' : HL;
+      document.execCommand('styleWithCSS', false, true);
+      if (!document.execCommand('hiliteColor', false, color)) document.execCommand('backColor', false, color);
+      document.execCommand('styleWithCSS', false, false);
+    } else {
+      document.execCommand(cmd);
+    }
+    drafts[panel].message = ed.innerHTML;
+    updateTools();
+  }
+
+  // Pasted text keeps bold, italic, underline, highlight, and lists; fonts, colors, and links go.
+  function cleanPaste(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const walk = (n) => {
+      if (n.nodeType === 3) return esc(n.nodeValue.replace(/\s+/g, ' '));
+      if (n.nodeType !== 1) return '';
+      const tag = n.tagName.toLowerCase();
+      if (/^(script|style|head|title|meta|template)$/.test(tag)) return '';
+      if (tag === 'br') return '<br>';
+      let inner = Array.from(n.childNodes).map(walk).join('');
+      const st = n.style;
+      const weight = st.fontWeight;
+      if (/^(b|strong)$/.test(tag) ? !/^(normal|[1-5]00)$/.test(weight) : /^(bold|bolder|[6-9]00)$/.test(weight)) inner = '<b>' + inner + '</b>';
+      if (/^(i|em)$/.test(tag) || st.fontStyle === 'italic') inner = '<i>' + inner + '</i>';
+      if (tag === 'u') inner = '<u>' + inner + '</u>';
+      if (tag === 'mark' || shows(st.backgroundColor)) inner = '<span style="background-color:' + HL + '">' + inner + '</span>';
+      if (/^(ul|ol|li)$/.test(tag)) return '<' + tag + '>' + inner + '</' + tag + '>';
+      if (/^(p|div|h[1-6]|blockquote|tr)$/.test(tag)) return '<div>' + inner + '</div>';
+      return inner;
+    };
+    return walk(doc.body);
+  }
+
+  document.addEventListener('mousedown', (e) => { if (e.target.closest('[data-cmd]')) e.preventDefault(); });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cmd]');
+    if (b) format(b.dataset.cmd);
+  });
+  document.addEventListener('selectionchange', () => {
+    const ed = editor();
+    const sel = getSelection();
+    if (!ed || !sel.rangeCount || !ed.contains(sel.anchorNode)) return;
+    savedRange = sel.getRangeAt(0).cloneRange();
+    updateTools();
+  });
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'msg') {
+      // Leave it truly empty once everything's deleted (browsers leave a stray <br>).
+      if (!e.target.textContent.trim() && !e.target.querySelector('li')) e.target.innerHTML = '';
+      drafts[panel].message = e.target.innerHTML;
+    }
+    if (e.target.name === 'subject') drafts[panel].subject = e.target.value;
+    if (e.target.name === 'dirEmail') drafts.weekend.dirEmail = e.target.value;
+    if (e.target.dataset && e.target.dataset.music) musicDrafts[e.target.dataset.music] = e.target.value;
+  });
+  document.addEventListener('paste', (e) => {
+    const ed = editor();
+    if (!ed || !ed.contains(e.target)) return;
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertHTML', false, html ? cleanPaste(html) : esc(text).replace(/\r?\n/g, '<br>'));
+    drafts[panel].message = ed.innerHTML;
   });
 
   // Pick up other people's signups when coming back to the tab.
