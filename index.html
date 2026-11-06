@@ -86,7 +86,10 @@
   .panel label.pick { flex-direction: row; align-items: center; gap: 8px; font-size: 15px; color: var(--text); padding: 4px 0; cursor: pointer; }
   .panel label.pick.off { color: var(--muted); cursor: default; }
   .pick small { color: var(--muted); font-size: 12px; }
-  input[type=checkbox] { padding: 0; margin: 0; width: 18px; height: 18px; flex: none; accent-color: var(--blue); }
+  input[type=checkbox], input[type=radio] { padding: 0; margin: 0; width: 18px; height: 18px; flex: none; accent-color: var(--blue); }
+  .when { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-left: 26px; }
+  .panel label.inline { flex-direction: row; align-items: center; gap: 6px; font-size: 15px; color: var(--text); }
+  .panel label small { color: var(--muted); }
   .person { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .person > div { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .person small { color: var(--muted); display: block; }
@@ -128,11 +131,12 @@
   let state = null;
   let panel = '';
   // Emails being written and music being typed, kept across re-renders.
-  // "to" is the director's own pick of cantor codes, or null for the usual recipients.
+  // "to" is the director's own pick of cantor codes, or null for the usual recipients;
+  // "me" is whether the director gets a copy, or null for yes (when there's an email in Settings).
   const freshDrafts = () => ({
-    email: { subject: null, message: '', to: null },
-    weekend: { sat: '', subject: null, message: null, dirEmail: null, to: null },
-    remind: { subject: null, message: '', to: null },
+    email: { subject: null, message: '', to: null, me: null },
+    weekend: { sat: '', subject: null, message: null, to: null, me: null },
+    remind: { subject: null, message: '', to: null, me: null },
   });
   let drafts = freshDrafts();
   const musicDrafts = {};
@@ -290,10 +294,15 @@
       '<div class="acts">' + (m.removed ? '' : checkIf(m)) + '</div></div>';
   }
 
-  // Every cantor with a checkbox; the usual recipients start checked.
+  const copyMe = () => !!state.directorEmail && drafts[panel].me !== false;
+
+  // The director, then every cantor, with a checkbox; the usual recipients start checked.
   function recipientPicker(usual, singing = []) {
     const chosen = drafts[panel].to || usual;
-    const rows = state.cantors.map((c) => c.email
+    const me = state.directorEmail
+      ? '<label class="pick"><input type="checkbox" data-me' + (copyMe() ? ' checked' : '') + '><span>You <small>a copy</small></span></label>'
+      : '<label class="pick off"><input type="checkbox" disabled><span>You <small>add your email in Settings</small></span></label>';
+    const rows = me + state.cantors.map((c) => c.email
       ? '<label class="pick"><input type="checkbox" data-pick value="' + esc(c.code) + '"' + (chosen.includes(c.code) ? ' checked' : '') + '>' +
         '<span>' + esc(c.name) + (singing.includes(c.code) ? ' <small>singing</small>' : '') + '</span></label>'
       : '<label class="pick off"><input type="checkbox" disabled><span>' + esc(c.name) + ' <small>' + (singing.includes(c.code) ? 'singing, ' : '') + 'no email</small></span></label>').join('');
@@ -303,17 +312,21 @@
 
   function sendButton(usual, blocked) {
     const n = (drafts[panel].to || usual).filter((code) => state.cantors.some((c) => c.code === code && c.email)).length;
-    return '<button class="primary" id="sendBtn"' + (blocked ? ' data-blocked="1"' : '') + (n && !blocked ? '' : ' disabled') + '>' + sendLabel(n) + '</button>';
+    const me = copyMe();
+    return '<button class="primary" id="sendBtn"' + (blocked ? ' data-blocked="1"' : '') + ((n || me) && !blocked ? '' : ' disabled') + '>' + sendLabel(n, me) + '</button>';
   }
-  const sendLabel = (n) => 'Send to ' + n + (n === 1 ? ' cantor' : ' cantors');
+  const sendLabel = (n, me) => !n ? (me ? 'Send to just you' : 'Send') : 'Send to ' + n + (n === 1 ? ' cantor' : ' cantors') + (me ? ' + you' : '');
   const everyoneWithEmail = () => state.cantors.filter((c) => c.email).map((c) => c.code);
 
   function picksChanged() {
     const picked = Array.from(document.querySelectorAll('[data-pick]:checked')).map((b) => b.value);
+    const meBox = document.querySelector('[data-me]');
     drafts[panel].to = picked;
+    if (meBox) drafts[panel].me = meBox.checked;
+    const me = copyMe();
     const btn = document.getElementById('sendBtn');
-    btn.textContent = sendLabel(picked.length);
-    btn.disabled = !picked.length || !!btn.dataset.blocked;
+    btn.textContent = sendLabel(picked.length, me);
+    btn.disabled = !(picked.length || me) || !!btn.dataset.blocked;
   }
 
   function richText(label, html) {
@@ -360,13 +373,11 @@
         '<label class="full">Weekend<select name="weekendSat">' +
         weeks.map((x) => '<option value="' + x.sat + '"' + (x.sat === w.sat ? ' selected' : '') + '>' + weekendLabel(x.sat) + '</option>').join('') + '</select></label>' +
         recipientPicker(usual, w.cantors.map((c) => c.code)) +
-        '<label class="full">Your email (you get a copy, and replies come to you)<input name="dirEmail" type="email" autocomplete="email" value="' +
-        esc(d.dirEmail == null ? state.directorEmail : d.dirEmail) + '"></label>' +
         '<label class="full">Subject<input name="subject" value="' + esc(d.subject == null ? 'Music for ' + weekendLabel(w.sat) : d.subject) + '"></label>' +
         richText('Message', d.message == null ? esc(music).replace(/\n/g, '<br>') : d.message) +
         sendButton(usual) +
         '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
-        '<p class="sub" style="margin-top:10px">Starts with a list of who’s singing which Mass that week (Monday through Sunday). Everyone checked is on one email together.</p></div>';
+        '<p class="sub" style="margin-top:10px">Starts with a list of who’s singing which Mass that week (Monday through Sunday). Everyone checked is on one email together, and replies come to your email in Settings.</p></div>';
     }
     if (panel === 'remind') {
       const up = state.upcoming;
@@ -396,13 +407,29 @@
         '</div>';
     }
     if (panel === 'settings') {
+      const sched = state.digestSchedule;
+      const suggested = !state.directorEmail && state.ownerEmail;
+      const hourLabel = (h) => (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
+      const opts = (values, label, current) =>
+        values.map((v) => '<option value="' + v + '"' + (v === current ? ' selected' : '') + '>' + label(v) + '</option>').join('');
+      const radio = (v, label) =>
+        '<label class="pick"><input type="radio" name="freq" value="' + v + '"' + (sched.freq === v ? ' checked' : '') + '><span>' + label + '</span></label>';
       return '<div class="panel"><form data-form="saveSettings">' +
-        '<label class="full">Your email<input name="myEmail" type="email" autocomplete="email" value="' + esc(state.directorEmail) + '"></label>' +
+        '<label class="full">Your email<input name="myEmail" type="email" autocomplete="email" value="' + esc(state.directorEmail || state.ownerEmail) + '">' +
+        (suggested ? '<small>This is the Sheet owner’s address. Change it if you use a different one, then Save.</small>' : '') + '</label>' +
+        '<label class="full">Signature (optional)<textarea name="signature" rows="3" placeholder="Your name, Music Director">' + esc(state.signature) + '</textarea>' +
+        '<small>Goes at the end of the sign-up, weekend, and reminder emails.</small></label>' +
         '<label class="pick" style="flex-basis:100%"><input type="checkbox" name="digest"' + (state.digest ? ' checked' : '') + '>' +
-        '<span>Email me a daily digest when signups change</span></label>' +
+        '<span>Email me a digest when signups change</span></label>' +
+        '<div class="when" id="digestWhen"' + (state.digest ? '' : ' hidden') + '>' +
+        radio('daily', 'Daily') + radio('weekly', 'Weekly') +
+        '<label class="inline" id="dayWrap"' + (sched.freq === 'weekly' ? '' : ' hidden') + '>on<select name="day">' +
+        opts(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], (d) => d, sched.day) + '</select></label>' +
+        '<label class="inline">at<select name="hour">' + opts([...Array(24).keys()], hourLabel, sched.hour) + '</select></label></div>' +
         '<button class="primary">Save</button>' +
         '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
-        '<p class="sub" style="margin-top:10px">Each morning around 7, if anyone signed up or dropped since the last one: the current schedule with the changes highlighted. Nothing on days without changes.</p></div>';
+        '<p class="sub" style="margin-top:10px"><strong>Changes Digest:</strong> if anyone signed up or dropped since the last one, you get the current schedule ' +
+        'with the changes highlighted. Nothing is sent when nothing changed. It goes out within the hour you pick.</p></div>';
     }
     if (panel === 'cantors') {
       const list = state.cantors.map((c) =>
@@ -509,7 +536,7 @@
     }
     const all = e.target.closest('[data-pickall]');
     if (all) {
-      document.querySelectorAll('[data-pick]').forEach((box) => (box.checked = all.dataset.pickall === '1'));
+      document.querySelectorAll('[data-pick], [data-me]').forEach((box) => (box.checked = all.dataset.pickall === '1'));
       return picksChanged();
     }
     const b = e.target.closest('button[data-act]');
@@ -538,7 +565,9 @@
         if (musicDrafts[sat] === el.value) delete musicDrafts[sat];
       });
     }
-    if (el.dataset.pick !== undefined) picksChanged();
+    if (el.dataset.pick !== undefined || el.dataset.me !== undefined) picksChanged();
+    if (el.name === 'digest') document.getElementById('digestWhen').hidden = !el.checked;
+    if (el.name === 'freq') document.getElementById('dayWrap').hidden = el.value !== 'weekly';
     if (el.name === 'weekendSat') {
       Object.assign(drafts.weekend, { sat: el.value, subject: null, message: null, to: null });
       render();
@@ -559,19 +588,26 @@
       if (!name) return show('Pick a Mass.');
       call('addMass', [{ name, date: val('date'), time: val('time'), needed: val('needed') }], () => (panel = ''));
     } else if (f.dataset.form === 'sendEmails') {
-      call('sendEmails', [val('subject'), editorHtml(), drafts.email.to], () => {
+      call('sendEmails', [val('subject'), editorHtml(), drafts.email.to, copyMe()], () => {
         panel = '';
         drafts.email = freshDrafts().email;
       });
     } else if (f.dataset.form === 'saveSettings') {
-      call('saveSettings', [{ email: val('myEmail'), digest: f.elements.digest.checked }], () => (panel = ''));
+      call('saveSettings', [{
+        email: val('myEmail'),
+        signature: f.elements.signature.value,
+        digest: f.elements.digest.checked,
+        hour: Number(f.elements.hour.value),
+        freq: f.elements.freq.value,
+        day: f.elements.day.value,
+      }], () => (panel = ''));
     } else if (f.dataset.form === 'sendReminder') {
-      call('sendReminder', [val('subject'), editorHtml(), drafts.remind.to], () => {
+      call('sendReminder', [val('subject'), editorHtml(), drafts.remind.to, copyMe()], () => {
         panel = '';
         drafts.remind = freshDrafts().remind;
       });
     } else if (f.dataset.form === 'sendWeekend') {
-      call('sendWeekend', [val('weekendSat'), val('subject'), editorHtml(), val('dirEmail'), drafts.weekend.to], () => {
+      call('sendWeekend', [val('weekendSat'), val('subject'), editorHtml(), copyMe(), drafts.weekend.to], () => {
         panel = '';
         drafts.weekend = freshDrafts().weekend;
       });
@@ -667,7 +703,6 @@
       drafts[panel].message = e.target.innerHTML;
     }
     if (e.target.name === 'subject') drafts[panel].subject = e.target.value;
-    if (e.target.name === 'dirEmail') drafts.weekend.dirEmail = e.target.value;
     if (e.target.dataset && e.target.dataset.music) musicDrafts[e.target.dataset.music] = e.target.value;
   });
   document.addEventListener('paste', (e) => {
