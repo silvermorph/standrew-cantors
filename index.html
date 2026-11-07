@@ -50,12 +50,20 @@
   button.armed { color: var(--danger); font-weight: 600; }
   select, input, textarea { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 7px 8px; min-width: 0; }
   textarea { resize: vertical; }
-  .chip { white-space: nowrap; display: inline-flex; align-items: center; max-width: 100%; border-radius: 999px; padding: 1px 0 1px 11px; background: var(--tint); color: var(--blue); font-weight: 600; }
-  .chip span { overflow: hidden; text-overflow: ellipsis; }
+  /* A long name wraps onto a second line rather than being cut off. */
+  .chip { display: inline-flex; align-items: center; max-width: 100%; border-radius: 14px; padding: 1px 0 1px 11px; background: var(--tint); color: var(--blue); font-weight: 600; line-height: 1.3; }
+  .chip span { overflow-wrap: anywhere; }
+  .trash { display: inline-flex; padding: 8px; }
+  .trash svg { width: 18px; height: 18px; }
+  .panel .intro { margin: 0 0 12px; }
+  .nw { white-space: nowrap; }
   .chip button { padding: 2px 9px; border: none; background: none; color: var(--blue); opacity: .7; }
 
-  .toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
-  .toolbar button { color: var(--blue); border-color: var(--tint-line); font-weight: 600; }
+  /* The director's tools, in two labeled rows of three: emails, then managing the schedule. */
+  .tools { display: grid; gap: 10px; }
+  .tools .label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .toolbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .toolbar button { color: var(--blue); border-color: var(--tint-line); font-weight: 600; padding: 8px 6px; line-height: 1.25; }
   .toolbar button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
   .panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 10px; }
   .panel form, .fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
@@ -115,19 +123,87 @@
   #status { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #1d2b66; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 15px; max-width: calc(100% - 32px); display: none; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
   #status.show { display: block; }
   body.busy button, body.busy select { pointer-events: none; }
+  .welcome { background: var(--tint); border: 1px solid var(--tint-line); border-radius: 8px; padding: 12px 14px; margin-top: 14px; }
+  .welcome h2 { margin: 0 0 4px; font-size: 19px; }
+  .massrow { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .massrow select { flex: 1; }
+  .panel h3 { margin: 0 0 10px; font-size: 16px; color: var(--blue); flex-basis: 100%; }
+  input[type=color] { padding: 2px; width: 56px; height: 36px; }
+
+  /* Install guide, shown on the shared page when there's no personal link. */
+  .guide h1 { margin-top: 10px; }
+  .guide ol { padding-left: 22px; }
+  .guide li { margin-bottom: 14px; }
+  .guide .menu { font-weight: 600; white-space: nowrap; }
+  .guide .callout { background: #fff8e1; border: 1px solid #f1d58a; border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  .guide .copy { display: inline-block; background: var(--blue); color: #fff; font-weight: 600; text-decoration: none; padding: 10px 16px; border-radius: 6px; margin: 4px 0; }
+  .guide small { color: var(--muted); }
 </style>
 </head>
 <body>
 <header class="bar"><div><strong>Saint Andrew Cantors</strong><span id="who"></span></div></header>
 <main id="app"></main>
+<section id="guide" class="guide" hidden>
+  <h1>Cantor Scheduler</h1>
+  <p>Cantors sign up for Masses from a personal link: no accounts, no passwords. The director sees the whole
+  schedule, fills gaps, notes each week's music, and emails cantors from the same page.</p>
+  <p>It's free and runs entirely in <strong>your own Google account</strong>: the schedule lives in a Google Sheet
+  you own, and emails go out from your Gmail. Nobody else, including whoever made this, can see your Sheet.</p>
+  <p class="sub">Got here from a cantor link that didn't work? Ask your choir director for a new one.</p>
+
+  <h2>Set it up for your parish</h2>
+  <p>About 10 minutes, all in your web browser. Use a computer, not a phone.</p>
+  <ol>
+    <li><strong>Sign in to Google</strong> with the account that should own the schedule. Emails to cantors come
+      from this account, so a parish or music-ministry account is a good choice.</li>
+    <li><strong>Make your copy.</strong><br>
+      <a class="copy" href="" target="_blank" rel="noopener">Copy the template Sheet</a><br>
+      Then click <span class="menu">Make a copy</span>. Keep the copy's name or rename it; either is fine.</li>
+    <li><strong>Turn it on.</strong> In your copy, choose <span class="menu">Extensions ▸ Apps Script</span>.
+      In the window that opens, click <span class="menu">Deploy ▸ New deployment</span>. Click the gear next to
+      "Select type" and choose <span class="menu">Web app</span>. Set <span class="menu">Execute as: Me</span> and
+      <span class="menu">Who has access: Anyone</span>, then click <span class="menu">Deploy</span>.</li>
+    <li><strong>Approve it.</strong> Google asks you to authorize access. Click
+      <span class="menu">Authorize access</span> and pick your account.
+      <div class="callout"><strong>Expect a security warning.</strong> Google will say
+        <em>"Google hasn't verified this app."</em> That's normal for a script you run yourself. Click
+        <span class="menu">Advanced</span>, then <span class="menu">Go to Cantor Scheduler (unsafe)</span>, then
+        <span class="menu">Allow</span>.<br><small>It asks to: see and edit this one Sheet; send email as you (the
+        sign-up emails); run on a timer (the optional digest); and see your email address (to fill in Settings). It
+        can't see your other files.</small></div></li>
+    <li><strong>Copy the Web app URL</strong> that Google shows when it's done (it ends in <code>/exec</code>),
+      then click <span class="menu">Done</span>.</li>
+    <li><strong>Get your director link.</strong> Go back to your Sheet and reload it. A
+      <span class="menu">Cantors</span> menu appears (it can take a few seconds). Choose
+      <span class="menu">Cantors ▸ Director link</span>, paste the URL from step 5, and open the link it gives you.
+      Bookmark it and keep it private: it's how you manage the schedule.</li>
+    <li><strong>Set up your parish.</strong> The director page opens on Settings: enter your parish's name, Mass
+      times, and time zone. Then add your cantors (<span class="menu">Cantor list</span>) and send them their
+      links (<span class="menu">Sign-up links</span>).</li>
+  </ol>
+
+  <h2 id="updates">Getting updates</h2>
+  <p>Your director page says when there's a new version. To update, in your Sheet choose
+  <span class="menu">Extensions ▸ Apps Script</span>. On the left under <span class="menu">Libraries</span>, click
+  <span class="menu">CantorScheduler</span>, pick the highest version, and click <span class="menu">Save</span>. Then
+  <span class="menu">Deploy ▸ Manage deployments</span>, click the pencil, set <span class="menu">Version: New version</span>,
+  and click <span class="menu">Deploy</span>. Your links stay the same. If Google asks you to approve it again, it's the
+  same as when you set it up (step 4).</p>
+</section>
 <div id="status"></div>
 <dialog id="pastDlg"><p>This period is already complete. Return to the current sign-up period?</p>
   <form method="dialog"><button value="cancel" class="quiet">Cancel</button><button value="ok" class="primary">OK</button></form></dialog>
 
 <script>
-  // The Google Apps Script backend (src/Code.js), filled in from the deployment ID.
-  const API_URL = 'https://script.google.com/macros/s/AKfycbyIbYjPRm3t4a37lodvQq6Rdred4DcQDqzwS_2QFU3cKbOYyiA3yhW75H1wvhxGGmRq3A/exec';
-  const KEY = new URLSearchParams(location.search).get('k') || '';
+  // The Google Apps Script backend (src/Code.js). On the shared page, each parish's links
+  // name their own script (?s=deployment ID); otherwise it's this installation's, built in.
+  const SHARED = false;
+  // The newest library build, on the shared page: a director whose copy runs an older one is told.
+  const LATEST_BUILD = '';
+  const PARAMS = new URLSearchParams(location.search);
+  const KEY = PARAMS.get('k') || '';
+  const SCRIPT = /^AKfy[\w-]{20,}$/.test(PARAMS.get('s') || '') ? PARAMS.get('s') : '';
+  const API_URL = SCRIPT ? 'https://script.google.com/macros/s/' + SCRIPT + '/exec' : 'https://script.google.com/macros/s/AKfycbyIbYjPRm3t4a37lodvQq6Rdred4DcQDqzwS_2QFU3cKbOYyiA3yhW75H1wvhxGGmRq3A/exec';
   let state = null;
   let panel = '';
   // Emails being written and music being typed, kept across re-renders.
@@ -179,8 +255,26 @@
 
   // ---------------------------------------------------------------- render
 
+  // The parish's name and color, from its script.
+  function applySite(site) {
+    if (!site) return;
+    document.title = site.name;
+    document.querySelector('.bar strong').textContent = site.headerName || site.name;
+    const c = site.colors || {};
+    const hex = (x) => /^#[0-9a-fA-F]{6}$/.test(x || '');
+    if (!hex(c.primary)) return;
+    const mix = (a, b, t) => '#' + [1, 3, 5].map((i) =>
+      Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join('');
+    const root = document.documentElement.style;
+    root.setProperty('--blue', c.primary);
+    root.setProperty('--blue-dark', hex(c.primaryDark) ? c.primaryDark : mix(c.primary, '#000000', 0.3));
+    root.setProperty('--tint', hex(c.tint) ? c.tint : mix(c.primary, '#ffffff', 0.9));
+    root.setProperty('--tint-line', hex(c.tintLine) ? c.tintLine : mix(c.primary, '#ffffff', 0.72));
+  }
+
   function render() {
     const app = document.getElementById('app');
+    if (state && state.site) applySite(state.site);
     document.getElementById('who').textContent = !state || state.error ? '' : state.admin ? 'Director' : state.me;
     if (!state) {
       app.innerHTML = '<p class="empty">Loading…</p>';
@@ -190,12 +284,23 @@
       app.innerHTML = '<p class="empty">This link doesn’t work. Ask the choir director for a new one.</p>';
       return;
     }
+    // This parish moved to a new copy of the Sheet: a cantor's link opens it there (same code).
+    if (state.movedTo && !state.admin) {
+      if (state.movedTo.s !== SCRIPT) {
+        location.replace(location.pathname + '?s=' + encodeURIComponent(state.movedTo.s) + '&k=' + encodeURIComponent(KEY));
+        app.innerHTML = '<p class="empty">Opening…</p>';
+      } else {
+        app.innerHTML = '<p class="empty">This link doesn’t work. Ask the choir director for a new one.</p>';
+      }
+      return;
+    }
     app.innerHTML = state.admin ? renderAdmin() : renderCantor();
   }
 
   function renderCantor() {
     const b = state.blocks[0];
-    return '<h1>' + range(b) + '</h1>' +
+    const open = b.masses.some((m) => !m.cantors.some((c) => c.mine) && m.cantors.length < m.needed);
+    return '<h1>' + range(b) + '</h1>' + (open ? '<p class="sub">Tap Sign up for any open Mass.</p>' : '') +
       (b.masses.length ? renderMasses(b.masses) : '<p class="empty">No Masses left in this block.</p>');
   }
 
@@ -206,10 +311,13 @@
     const tool = (id, label) => '<button class="' + (panel === id ? 'on' : '') + '" data-act="panel" data-v="' + id + '">' + label + '</button>';
     const side = (s, dir) => !s ? '<span></span>' :
       '<button class="side ' + dir + (s.status === 'past' ? ' past' : '') + '" data-act="go" data-v="' + s.start + '">' +
-      '<span>' + (dir === 'prev' ? '‹ ' : '') + range(s) + (dir === 'next' ? ' ›' : '') + '</span>' +
+      '<span><span class="nw">' + (dir === 'prev' ? '‹ ' : '') + md(s.start) + ' –</span> <span class="nw">' + md(s.end) + (dir === 'next' ? ' ›' : '') + '</span></span>' +
       '<small>' + { past: 'Past', open: 'Current', upcoming: 'Upcoming' }[s.status] + '</small></button>';
     const sub = past ? 'Past' : p.status === 'open' ? 'Open now' : 'Opens ' + dayLabel(p.opens.slice(0, 10)) + ', ' + time12(p.opens.slice(11));
-    let h = '<div class="toolbar">' + tool('add', 'Add Mass') + tool('email', 'Sign-up email') + tool('weekend', 'Weekend email') + tool('remind', 'Reminder') + tool('cantors', 'Cantors') + tool('settings', 'Settings') + '</div>' +
+    const group = (label, tools) => '<div><span class="label">' + label + '</span><div class="toolbar">' + tools + '</div></div>';
+    let h = notices() + '<div class="tools">' +
+      group('Email cantors', tool('email', 'Sign-up links') + tool('weekend', 'Weekend music') + tool('remind', 'Sign-up reminder')) +
+      group('Manage', tool('add', 'Add a Mass') + tool('cantors', 'Cantor list') + tool('settings', 'Settings')) + '</div>' +
       renderPanel() +
       '<nav class="periods">' + side(p.prev, 'prev') +
       '<div class="cur' + (past ? ' past' : '') + '"><h2>' + range(b) + '</h2><p class="sub">' + sub + '</p></div>' +
@@ -219,6 +327,26 @@
       (b.masses.length ? renderMasses(b.masses, true) : '<p class="empty">No Masses left.</p>') + '</div>';
     if (state.later.length) h += '<h2>Later</h2>' + renderMasses(state.later);
     return h;
+  }
+
+  /** Above the director's toolbar: this copy moved to a new one, or there's an update. */
+  function notices() {
+    const m = state.movedTo;
+    if (m) {
+      const link = location.pathname + '?s=' + encodeURIComponent(m.s) + '&k=' + encodeURIComponent(m.k);
+      return '<div class="welcome"><strong>This schedule has moved</strong> to a new copy of the Sheet, and cantors’ links ' +
+        'open it there. <a href="' + esc(link) + '">Open the new director page</a> and bookmark it.</div>';
+    }
+    if (!SHARED || !LATEST_BUILD || state.build === LATEST_BUILD || updateDismissed()) return '';
+    return '<div class="welcome"><strong>An update is available.</strong> ' +
+      '<a href="' + esc(location.pathname) + '#updates" target="_blank" rel="noopener">How to update</a> ' +
+      '(a few minutes in Apps Script; your links stay the same). ' +
+      '<button class="link" data-act="dismissUpdate">Not now</button></div>';
+  }
+
+  // "Not now" hides the update notice on this device until the next update.
+  function updateDismissed() {
+    try { return localStorage.getItem('updateDismissed') === LATEST_BUILD; } catch (e) { return false; }
   }
 
   function renderMasses(masses, withMusic) {
@@ -236,6 +364,7 @@
     return h;
   }
 
+  const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
   const CHECK = '<span class="check" title="Covered" aria-label="Covered"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></span>';
   const massClass = (m, mine) => 'mass' + (m.cantors.length >= m.needed ? ' full' : '') + (mine ? ' mine' : '');
   const checkIf = (m) => m.cantors.length >= m.needed ? CHECK : '';
@@ -269,7 +398,7 @@
       : '';
     return '<div class="' + massClass(m) + '"><div class="time">' + time12(m.time) + '</div>' +
       '<div class="info">' + (m.name ? '<div class="title">' + esc(m.name) + '</div>' : '') + chips + assign + '</div>' +
-      '<div class="acts">' + checkIf(m) + '<button class="quiet" data-act="remove" data-confirm="Remove?" data-id="' + id + '">Remove</button></div></div>';
+      '<div class="acts">' + checkIf(m) + '<button class="quiet trash" data-act="remove" data-confirm="Remove?" data-id="' + id + '" title="Remove this Mass" aria-label="Remove this Mass">' + TRASH + '</button></div></div>';
   }
 
   // The director's notes on the music for a week, saved when they leave the box.
@@ -342,7 +471,7 @@
   function renderPanel() {
     if (panel === 'add') {
       const opts = state.massNames.map((n) => '<option>' + esc(n) + '</option>').join('');
-      return '<div class="panel"><form data-form="addMass">' +
+      return '<div class="panel"><p class="sub intro">For holy days and other one-off Masses. The weekly ones are in Settings.</p><form data-form="addMass">' +
         '<label class="grow">Mass<select name="pick"><option value="">Choose…</option>' + opts + '<option value="__other">Other…</option></select></label>' +
         '<label class="grow" id="customWrap" hidden>Name<input name="custom" autocomplete="off"></label>' +
         '<label>Date<input type="date" name="date" required></label>' +
@@ -352,7 +481,7 @@
     }
     if (panel === 'email') {
       const usual = everyoneWithEmail();
-      return '<div class="panel"><form data-form="sendEmails">' +
+      return '<div class="panel"><p class="sub intro">Each person gets their own email with their personal sign-up link.</p><form data-form="sendEmails">' +
         recipientPicker(usual) +
         '<label class="full">Subject<input name="subject" value="' + esc(drafts.email.subject == null ? state.emailSubject : drafts.email.subject) + '"></label>' +
         richText('Message after the link (optional)', drafts.email.message) +
@@ -369,15 +498,14 @@
       const w = weeks.find((x) => x.sat === d.sat);
       const music = w.sat in musicDrafts ? musicDrafts[w.sat] : w.music;
       const usual = w.cantors.filter((c) => c.email).map((c) => c.code);
-      return '<div class="panel"><form data-form="sendWeekend">' +
+      return '<div class="panel"><p class="sub intro">One email to everyone checked, starting with who’s singing which Mass that week (Monday through Sunday). Replies come to your email in Settings.</p><form data-form="sendWeekend">' +
         '<label class="full">Weekend<select name="weekendSat">' +
         weeks.map((x) => '<option value="' + x.sat + '"' + (x.sat === w.sat ? ' selected' : '') + '>' + weekendLabel(x.sat) + '</option>').join('') + '</select></label>' +
         recipientPicker(usual, w.cantors.map((c) => c.code)) +
         '<label class="full">Subject<input name="subject" value="' + esc(d.subject == null ? 'Music for ' + weekendLabel(w.sat) : d.subject) + '"></label>' +
         richText('Message', d.message == null ? esc(music).replace(/\n/g, '<br>') : d.message) +
         sendButton(usual) +
-        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
-        '<p class="sub" style="margin-top:10px">Starts with a list of who’s singing which Mass that week (Monday through Sunday). Everyone checked is on one email together, and replies come to your email in Settings.</p></div>';
+        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form></div>';
     }
     if (panel === 'remind') {
       const up = state.upcoming;
@@ -393,44 +521,87 @@
           : '<span class="ok">✓ ' + names + '</span>';
         return '<tr><td>' + dayLabel(m.date) + ', ' + time12(m.time) + (m.name ? '<br><small>' + esc(m.name) + '</small>' : '') + '</td><td>' + status + '</td></tr>';
       }).join('');
-      return '<div class="panel"><form data-form="sendReminder">' +
+      return '<div class="panel"><p class="sub intro">' + (open
+          ? 'Each person gets their own email with this list and their sign-up link.'
+          : 'Every Mass that weekend already has its cantors.') + '</p><form data-form="sendReminder">' +
         '<div class="full"><span class="lbl">The weekend of ' + weekendLabel(up.sat) + '</span><table class="slots">' + rows + '</table></div>' +
         recipientPicker(usual) +
         '<label class="full">Subject<input name="subject" value="' + esc(d.subject == null ? 'Cantors needed: ' + weekendLabel(up.sat) : d.subject) + '"></label>' +
         richText('Message after the link (optional)', d.message) +
         sendButton(usual, !open) +
         '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
-        '<p class="sub" style="margin-top:10px">' + (open
-          ? 'Each person gets their own email with this list and their sign-up link.'
-          : 'Every Mass that weekend already has its cantors.') + '</p>' +
-        (state.lastReminded ? '<p class="sub" style="margin-top:6px">Last sent ' + esc(state.lastReminded) + '</p>' : '') +
+        (state.lastReminded ? '<p class="sub" style="margin-top:10px">Last sent ' + esc(state.lastReminded) + '</p>' : '') +
         '</div>';
     }
     if (panel === 'settings') {
-      const sched = state.digestSchedule;
-      const suggested = !state.directorEmail && state.ownerEmail;
-      const hourLabel = (h) => (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
-      const opts = (values, label, current) =>
-        values.map((v) => '<option value="' + v + '"' + (v === current ? ' selected' : '') + '>' + label(v) + '</option>').join('');
-      const radio = (v, label) =>
-        '<label class="pick"><input type="radio" name="freq" value="' + v + '"' + (sched.freq === v ? ' checked' : '') + '><span>' + label + '</span></label>';
-      return '<div class="panel"><form data-form="saveSettings">' +
-        '<label class="full">Your email<input name="myEmail" type="email" autocomplete="email" value="' + esc(state.directorEmail || state.ownerEmail) + '">' +
-        (suggested ? '<small>This is the Sheet owner’s address. Change it if you use a different one, then Save.</small>' : '') + '</label>' +
-        '<label class="full">Signature (optional)<textarea name="signature" rows="3" placeholder="Your name, Music Director">' + esc(state.signature) + '</textarea>' +
-        '<small>Goes at the end of the sign-up, weekend, and reminder emails.</small></label>' +
-        '<label class="pick" style="flex-basis:100%"><input type="checkbox" name="digest"' + (state.digest ? ' checked' : '') + '>' +
-        '<span>Email me a digest when signups change</span></label>' +
-        '<div class="when" id="digestWhen"' + (state.digest ? '' : ' hidden') + '>' +
-        radio('daily', 'Daily') + radio('weekly', 'Weekly') +
-        '<label class="inline" id="dayWrap"' + (sched.freq === 'weekly' ? '' : ' hidden') + '>on<select name="day">' +
-        opts(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], (d) => d, sched.day) + '</select></label>' +
-        '<label class="inline">at<select name="hour">' + opts([...Array(24).keys()], hourLabel, sched.hour) + '</select></label></div>' +
-        '<button class="primary">Save</button>' +
-        '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
-        '<p class="sub" style="margin-top:10px"><strong>Changes Digest:</strong> if anyone signed up or dropped since the last one, you get the current schedule ' +
-        'with the changes highlighted. Nothing is sent when nothing changed. It goes out within the hour you pick.</p></div>';
+      return (state.needsSetup ? '<div class="welcome"><h2>Welcome!</h2>First, tell it about your parish (below) and click ' +
+        '<strong>Save parish</strong>. Then add your cantors with the <strong>Cantor list</strong> button.</div>' : '') +
+        (state.needsSetup ? parishPanel() + personalPanel() : personalPanel() + parishPanel());
     }
+    return morePanels();
+  }
+
+  const DAY_NAMES = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+  function massRow(m) {
+    return '<div class="massrow"><select name="massDay">' +
+      DAY_NAMES.map((d) => '<option' + (d === m.day ? ' selected' : '') + '>' + d + '</option>').join('') + '</select>' +
+      '<input type="time" name="massTime" value="' + esc(m.time) + '" required>' +
+      '<button type="button" class="quiet" data-act="delMass" title="Remove">×</button></div>';
+  }
+
+  // The parish's own settings: name, color, time zone, when periods start, the weekly Masses.
+  function parishPanel() {
+    const p = state.parish;
+    const setup = state.needsSetup;
+    const browserTz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return ''; } })();
+    const tz = setup && browserTz ? browserTz : p.timeZone;
+    let zones = [];
+    try { zones = Intl.supportedValuesOf('timeZone'); } catch (e) { /* older browsers */ }
+    if (!zones.includes(tz)) zones.unshift(tz);
+    // A new parish starts its two-week periods on the most recent Saturday.
+    const today = new Date();
+    const lastSat = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 1) % 7))).toISOString().slice(0, 10);
+    const first = setup ? lastSat : p.firstBlockSaturday;
+    return '<div class="panel"><form data-form="saveSite"><h3>Parish</h3>' +
+      '<label class="grow">Name<input name="siteName" required value="' + esc(setup ? '' : p.name) + '" placeholder="St. Cecilia Cantors"></label>' +
+      '<label>Color<input type="color" name="siteColor" value="' + esc(p.color) + '"></label>' +
+      '<label class="full">Time zone<select name="siteTz">' + zones.map((z) => '<option' + (z === tz ? ' selected' : '') + '>' + esc(z) + '</option>').join('') + '</select></label>' +
+      '<label class="full">Weekly Masses<small>The ones every weekend. Add holy days and other one-off Masses with the Add a Mass button.</small></label>' +
+      '<div class="full" id="massRows">' + p.regularMasses.map(massRow).join('') + '</div>' +
+      '<button type="button" class="quiet" data-act="addMassRow" style="color:var(--blue)">+ Add a weekly Mass</button>' +
+      '<label class="full">First Saturday<input type="date" name="siteFirst" required value="' + esc(first) + '">' +
+      '<small>Sign-ups open two weeks at a time, starting on this Saturday.' + (setup ? '' : ' Changing it, or the Mass times, after people have signed up hides their sign-ups for Masses that no longer match.') + '</small></label>' +
+      '<button class="primary">Save parish</button></form></div>';
+  }
+
+  function personalPanel() {
+    const sched = state.digestSchedule;
+    const suggested = !state.directorEmail && state.ownerEmail;
+    const hourLabel = (h) => (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
+    const opts = (values, label, current) =>
+      values.map((v) => '<option value="' + v + '"' + (v === current ? ' selected' : '') + '>' + label(v) + '</option>').join('');
+    const radio = (v, label) =>
+      '<label class="pick"><input type="radio" name="freq" value="' + v + '"' + (sched.freq === v ? ' checked' : '') + '><span>' + label + '</span></label>';
+    return '<div class="panel"><form data-form="saveSettings"><h3>You</h3>' +
+      '<label class="full">Your email<input name="myEmail" type="email" autocomplete="email" value="' + esc(state.directorEmail || state.ownerEmail) + '">' +
+      (suggested ? '<small>This is the Sheet owner’s address. Change it if you use a different one, then Save.</small>' : '') + '</label>' +
+      '<label class="full">Signature (optional)<textarea name="signature" rows="3" placeholder="Your name, Music Director">' + esc(state.signature) + '</textarea>' +
+      '<small>Goes at the end of the sign-up, weekend, and reminder emails.</small></label>' +
+      '<label class="pick" style="flex-basis:100%"><input type="checkbox" name="digest"' + (state.digest ? ' checked' : '') + '>' +
+      '<span>Email me a digest when signups change</span></label>' +
+      '<div class="when" id="digestWhen"' + (state.digest ? '' : ' hidden') + '>' +
+      radio('daily', 'Daily') + radio('weekly', 'Weekly') +
+      '<label class="inline" id="dayWrap"' + (sched.freq === 'weekly' ? '' : ' hidden') + '>on<select name="day">' +
+      opts(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], (d) => d, sched.day) + '</select></label>' +
+      '<label class="inline">at<select name="hour">' + opts([...Array(24).keys()], hourLabel, sched.hour) + '</select></label></div>' +
+      '<button class="primary">Save</button>' +
+      '<button type="button" class="quiet" data-act="panel" data-v="">Cancel</button></form>' +
+      '<p class="sub" style="margin-top:10px"><strong>Changes Digest:</strong> if anyone signed up or dropped since the last one, you get the current schedule ' +
+      'with the changes highlighted. Nothing is sent when nothing changed. It goes out within the hour you pick.</p></div>';
+  }
+
+  function morePanels() {
     if (panel === 'cantors') {
       const list = state.cantors.map((c) =>
         '<div class="person"><div>' + esc(c.name) + '<small>' + (esc(c.email) || 'No email') + '</small></div>' +
@@ -473,12 +644,22 @@
   }
 
   async function load() {
-    if (!KEY) {
+    if (!KEY && SHARED) {
+      document.getElementById('app').hidden = true;
+      document.getElementById('guide').hidden = false;
+      // The guide was hidden when the browser looked for #updates, so go there now.
+      const target = location.hash && document.getElementById(location.hash.slice(1));
+      if (target) target.scrollIntoView();
+      return;
+    }
+    if (!KEY || !API_URL) {
       state = { error: 'bad-link' };
       return render();
     }
     try {
+      const first = !state;
       state = await api('getState');
+      if (first && state.needsSetup) panel = 'settings';
       render();
     } catch (err) {
       if (!state) document.getElementById('app').innerHTML = '<p class="empty">' + esc(err.message) + '</p>';
@@ -501,12 +682,12 @@
   function armed(btn) {
     if (btn.dataset.armed) return true;
     btn.dataset.armed = '1';
-    btn.dataset.label = btn.textContent;
+    btn.dataset.label = btn.innerHTML;
     btn.textContent = btn.dataset.confirm;
     btn.classList.add('armed');
     setTimeout(() => {
       delete btn.dataset.armed;
-      btn.textContent = btn.dataset.label;
+      btn.innerHTML = btn.dataset.label;
       btn.classList.remove('armed');
     }, 3000);
     return false;
@@ -551,7 +732,13 @@
     else if (act === 'removeCantor') call('removeCantor', [code]);
     else if (act === 'copy') copy(v, b);
     else if (act === 'go') go(v);
+    else if (act === 'addMassRow') document.getElementById('massRows').insertAdjacentHTML('beforeend', massRow({ day: 'Sunday', time: '' }));
+    else if (act === 'delMass') b.closest('.massrow').remove();
     else if (act === 'panel') { panel = panel === v ? '' : v; render(); }
+    else if (act === 'dismissUpdate') {
+      try { localStorage.setItem('updateDismissed', LATEST_BUILD); } catch (e) { /* shows again next time */ }
+      render();
+    }
   });
 
   document.addEventListener('change', (e) => {
@@ -592,6 +779,17 @@
         panel = '';
         drafts.email = freshDrafts().email;
       });
+    } else if (f.dataset.form === 'saveSite') {
+      const days = Array.from(f.querySelectorAll('[name=massDay]')).map((x) => x.value);
+      const times = Array.from(f.querySelectorAll('[name=massTime]')).map((x) => x.value);
+      const firstTime = state.needsSetup;
+      call('saveSite', [{
+        name: val('siteName'),
+        color: f.elements.siteColor.value,
+        timeZone: f.elements.siteTz.value,
+        firstBlockSaturday: val('siteFirst'),
+        regularMasses: days.map((day, i) => ({ day, time: times[i] })),
+      }], () => (panel = firstTime ? 'cantors' : ''));
     } else if (f.dataset.form === 'saveSettings') {
       call('saveSettings', [{
         email: val('myEmail'),
