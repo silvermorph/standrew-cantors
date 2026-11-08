@@ -203,7 +203,7 @@
   const PARAMS = new URLSearchParams(location.search);
   const KEY = PARAMS.get('k') || '';
   const SCRIPT = /^AKfy[\w-]{20,}$/.test(PARAMS.get('s') || '') ? PARAMS.get('s') : '';
-  const API_URL = SCRIPT ? 'https://script.google.com/macros/s/' + SCRIPT + '/exec' : 'https://script.google.com/macros/s/AKfycbyIbYjPRm3t4a37lodvQq6Rdred4DcQDqzwS_2QFU3cKbOYyiA3yhW75H1wvhxGGmRq3A/exec';
+  const API_URL = SCRIPT ? 'https://script.google.com/macros/s/' + SCRIPT + '/exec' : 'https://script.google.com/macros/s/AKfycbwdol0dVbv3mflEZJo-5xrrycxW0QkKqKD3PJfU3mwT4jdeBjizkZSFZzE049vNCC5d/exec';
   let state = null;
   let panel = '';
   // Emails being written and music being typed, kept across re-renders.
